@@ -42,9 +42,7 @@ app.get('^/article/:id(' + articleUuidRegex + ')/social-counts', require('./cont
 app.get('/embedded-components/slideshow/:id', require('./controllers/slideshow'));
 
 // Use barriers middleware only before calling full article endpoints
-if (req.get('FT-Labs-Gift') !== 'GRANTED') {
-	app.use(barriers.middleware(express.metrics));
-}
+app.use(barriers.middleware(express.metrics));
 
 app.get('^/content/:id(' + articleUuidRegex + ')$', require('./controllers/interactive'));
 app.get('^/content/:id(' + articleUuidRegex + ')$', require('./controllers/article'));
