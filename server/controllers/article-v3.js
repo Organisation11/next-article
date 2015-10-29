@@ -9,6 +9,7 @@ const readNextHelper = require('./article-helpers/read-next');
 const articleXsltTransform = require('../transforms/article-xslt');
 const bodyTransform = require('../transforms/body');
 const bylineTransform = require('../transforms/byline');
+const articleBranding = require('ft-n-article-branding');
 
 function isCapiV1(article) {
 	return article.provenance.find(
@@ -28,7 +29,6 @@ function transformArticleBody(article, flags) {
 		webUrl: article.webUrl,
 		renderTOC: flags.articleTOC ? 1 : 0,
 		renderSlideshows: flags.galleries ? 1 : 0,
-		renderSocial: flags.articleShareButtons ? 1 : 0,
 		suggestedRead: flags.articleSuggestedRead ? 1 : 0,
 		useBrightcovePlayer: flags.brightcovePlayer ? 1 : 0,
 		fullWidthMainImages: flags.fullWidthMainImages ? 1 : 0,
@@ -37,12 +37,7 @@ function transformArticleBody(article, flags) {
 	};
 
 	return articleXsltTransform(article.bodyXML, 'main', xsltParams).then(articleBody => {
-		let $ = bodyTransform(articleBody, flags);
-
-		return {
-			body: $.html(),
-			toc: $.html('.article__toc')
-		};
+		return bodyTransform(articleBody, flags);
 	});
 }
 
@@ -137,6 +132,8 @@ function getTwitterCardData(article) {
 }
 
 module.exports = function articleV3Controller(req, res, next, payload) {
+
+
 	let asyncWorkToDo = [];
 
 	if (res.locals.barrier) {
@@ -160,10 +157,12 @@ module.exports = function articleV3Controller(req, res, next, payload) {
 
 	asyncWorkToDo.push(
 		transformArticleBody(payload, res.locals.flags).then(fragments => {
-			payload.body = fragments.body;
-			payload.toc = fragments.toc;
+			payload.bodyHTML = fragments.bodyHTML;
+			payload.tocHTML = fragments.tocHTML;
+			payload.mainImageHTML = fragments.mainImageHTML;
 		})
 	);
+	payload.designGenre = articleBranding(payload.metadata);
 
 	// Decorate with related stuff
 	payload.moreOns = getMoreOnTags(primaryTheme, primarySection);
@@ -209,9 +208,6 @@ module.exports = function articleV3Controller(req, res, next, payload) {
 	}
 
 	payload.byline = bylineTransform(payload.byline, payload.metadata.filter(item => item.taxonomy === 'authors'));
-
-	// TODO: implement this
-	payload.visualCat = null;
 
 	return Promise.all(asyncWorkToDo)
 		.then(() => {
