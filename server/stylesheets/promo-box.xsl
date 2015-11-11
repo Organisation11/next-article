@@ -2,9 +2,9 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
     <xsl:template match="/html/body/promo-box">
-      <xsl:variable name="longBoxWordBoundaryImage" select="45" />
-      <xsl:variable name="longBoxWordBoundaryNoImage" select="90" />
-      <xsl:variable name="expanderParaBreakPoint" select="2" />
+      <xsl:variable name="longBoxWordBoundaryImage" select="100" />
+      <xsl:variable name="longBoxWordBoundaryNoImage" select="150" />
+      <xsl:variable name="expanderParaBreakPoint" select="3" />
       <xsl:variable name="wordCount" select=" string-length(normalize-space(current()/promo-intro))
         - string-length(translate(normalize-space(current()/promo-intro),' ','')) +1" />
       <xsl:variable name="contentParagraphs" select="count(current()/promo-intro/p)" />
@@ -35,12 +35,26 @@
           </xsl:choose>
         </xsl:when>
         <xsl:otherwise>
-          <aside class="promo-box ng-inline-element" data-trackable="promobox" role="complementary">
-            <div class="promo-box__wrapper">
-              <xsl:apply-templates select="current()" mode="default-title" />
-              <xsl:apply-templates />
-            </div>
-          </aside>
+          <xsl:choose>
+            <xsl:when test="$contentParagraphs > $expanderParaBreakPoint">
+              <aside class="promo-box ng-inline-element o-expander" data-trackable="promobox" role="complementary" data-o-component="o-expander" data-o-expander-shrink-to="0" data-o-expander-count-selector=".promo-box__content__extension">
+                <div class="promo-box__wrapper">
+                  <xsl:apply-templates select="current()" mode="default-title" />
+                  <xsl:apply-templates>
+                      <xsl:with-param name="variation">long</xsl:with-param>
+                  </xsl:apply-templates>
+                </div>
+              </aside>
+            </xsl:when>
+            <xsl:otherwise>
+              <aside class="promo-box ng-inline-element" data-trackable="promobox" role="complementary">
+                <div class="promo-box__wrapper">
+                  <xsl:apply-templates select="current()" mode="default-title" />
+                  <xsl:apply-templates />
+                </div>
+              </aside>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:template>
@@ -109,7 +123,7 @@
     </xsl:template>
 
     <xsl:template match="promo-intro">
-      <xsl:variable name="expanderParaBreakPoint" select="2" />
+      <xsl:variable name="expanderParaBreakPoint" select="3" />
       <xsl:variable name="contentParagraphs" select="count(p)" />
       <xsl:choose>
         <xsl:when test="$contentParagraphs > $expanderParaBreakPoint">
